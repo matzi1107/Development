@@ -3,7 +3,9 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const db = require('./config/db')
+const db = require('./config/db');
+const auth = require('./middleware/auth');
+const authRoutes = require('./routes/authRoutes');
 require('dotenv').config();
 
 const app = express();
@@ -16,42 +18,20 @@ app.use(express.json());
 // Static files (für die Produktion)
 app.use(express.static(path.join(__dirname, '../../frontend/dist/frontend')));
 
+app.use('/internal/api/auth', authRoutes);
+app.use('/internal/oneshot/cust', require('./routes/customerRoutes'));
+app.use('/internal/oneshot/company', require('./routes/companyRoutes'));
+app.use('/internal/oneshot/activities', require('./routes/activityRoutes'));
+app.use('/internal/oneshot/invoice', require('./routes/invoiceRoutes'));
+app.use('/internal/oneshot/proj', require('./routes/projectRoutes'));
+app.use('/internal/oneshot/quote', require('./routes/quoteRoutes'));
+
 // API-Routen
-app.get('/internal/api/test', (req, res) => {
-  res.json({ message: 'Backend API funktioniert!' });
-});
-
-app.get('/internal/api/version', (req, res) => {
-  res.json({ message: 'Hias seine Version Nummer 1!' });
-});
-
-app.get('/internal/api/dbtest', async (req, res) => {
-  try {
-    const result = await db.query('select * from "int".users');
-
-    res.json({
-      success: true,
-      count: result.rows.length,
-      data: result.rows
-    });
-  } catch (err) {
-    console.error('Datenbankfehler:', err);
-
-    res.status(500).json({
-      success: false,
-      error: err.message,
-      details: err.stack
-    });
-  }
-});
-
-app.get('/internal/api/dbuser', async (req, res) => {
-  try {
-     const result = await db.query('SELECT current_user, current_database()');
-     res.json(result.rows[0]);
-  } catch (err) {
-     res.status(500).json({ error: err.message });
-  }
+app.get('/internal/api/test', auth.verifyToken, (req, res) => {
+  res.json({ 
+    message: 'Backend API funktioniert!',
+    user: req.user
+  });
 });
 
 // Fallback auf Angular App (für Produktion)
