@@ -1,0 +1,26 @@
+// Bootstrap-Overrides und moderne Styles für Projekte
+:host {
+  display: block;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+.card {
+  border: none;
+  border-radius: 1.2rem;
+  box-shadow: 0 4px 32px rgba(25, 118, 210, 0.08), 0 1.5px 6px rgba(0,0,0,0.03);
+}
+.table {
+  border-radius: 0.7rem;
+  overflow: hidden;
+}
+.badge {
+  font-size: 0.95em;
+  border-radius: 0.7em;
+  padding: 0.45em 0.9em;
+}
+.btn-outline-primary, .btn-outline-danger, .btn-success, .btn-secondary {
+  border-radius: 0.5rem;
+}
+.modal-content {
+  border-radius: 1rem;
+}

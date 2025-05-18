@@ -1,0 +1,56 @@
+<div class="container mt-4">
+  <h2>Firmendaten bearbeiten</h2>
+  <form (ngSubmit)="saveCompany(); $event.preventDefault();" *ngIf="company">
+    <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+    <div *ngIf="success" class="alert alert-success">{{ success }}</div>
+    <div class="mb-3">
+      <label class="form-label">Firmenname</label>
+      <input class="form-control" [(ngModel)]="company.name" name="name" required />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Straße</label>
+      <input class="form-control" [(ngModel)]="company.street" name="street" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">PLZ</label>
+      <input class="form-control" [(ngModel)]="company.postalCode" name="postalCode" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Ort</label>
+      <input class="form-control" [(ngModel)]="company.city" name="city" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Telefon</label>
+      <input class="form-control" [(ngModel)]="company.phone" name="phone" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">E-Mail</label>
+      <input class="form-control" [(ngModel)]="company.email" name="email" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Website</label>
+      <input class="form-control" [(ngModel)]="company.website" name="website" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Steuernummer</label>
+      <input class="form-control" [(ngModel)]="company.taxId" name="taxId" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">UID (USt-IdNr)</label>
+      <input class="form-control" [(ngModel)]="company.vatId" name="vatId" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Bankname</label>
+      <input class="form-control" [(ngModel)]="company.bankName" name="bankName" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">IBAN</label>
+      <input class="form-control" [(ngModel)]="company.iban" name="iban" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">BIC</label>
+      <input class="form-control" [(ngModel)]="company.bic" name="bic" />
+    </div>
+    <button class="btn btn-success" type="submit" [disabled]="loading">Speichern</button>
+  </form>
+</div>

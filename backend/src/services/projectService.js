@@ -13,12 +13,19 @@ exports.getAllProjects = async () => {
         nada, 
         COALESCE(naid, '') AS naid, 
         COALESCE(subproj, '') AS subproj, 
-        COALESCE(lnr, 0) AS lnr 
+        COALESCE(lnr, 0) AS lnr, 
+        COALESCE(patches, '[]') AS patches
       FROM "int".projects
       ORDER BY cust, COALESCE(lnr, 0)
     `);
     
-    return result.rows.map(row => new Project(row));
+    return result.rows.map(row => {
+      // patches als Array parsen
+      if (typeof row.patches === 'string') {
+        try { row.patches = JSON.parse(row.patches); } catch { row.patches = []; }
+      }
+      return new Project(row);
+    });
   } catch (error) {
     throw new Error(`Fehler beim Abrufen der Projekte: ${error.message}`);
   }
@@ -35,7 +42,8 @@ exports.getProjectByCustomerAndLnr = async (cust, lnr) => {
         nada, 
         COALESCE(naid, '') AS naid, 
         COALESCE(subproj, '') AS subproj, 
-        COALESCE(lnr, 0) AS lnr 
+        COALESCE(lnr, 0) AS lnr, 
+        COALESCE(patches, '[]') AS patches
       FROM "int".projects 
       WHERE cust = $1 AND COALESCE(lnr, 0) = $2
     `, [cust, lnr]);
@@ -61,13 +69,19 @@ exports.getProjectsByCustomer = async (custId) => {
         nada, 
         COALESCE(naid, '') AS naid, 
         COALESCE(subproj, '') AS subproj, 
-        COALESCE(lnr, 0) AS lnr 
+        COALESCE(lnr, 0) AS lnr, 
+        COALESCE(patches, '[]') AS patches
       FROM "int".projects 
       WHERE cust = $1
       ORDER BY COALESCE(lnr, 0)
     `, [custId]);
     
-    return result.rows.map(row => new Project(row));
+    return result.rows.map(row => {
+      if (typeof row.patches === 'string') {
+        try { row.patches = JSON.parse(row.patches); } catch { row.patches = []; }
+      }
+      return new Project(row);
+    });
   } catch (error) {
     throw new Error(`Fehler beim Abrufen der Projekte für Kunde ${custId}: ${error.message}`);
   }
@@ -91,9 +105,9 @@ exports.createProject = async (projectData, username) => {
     // 3. Projekt in Datenbank einfügen
     const result = await db.query(`
       INSERT INTO "int".projects 
-      (cust, pname, pdate, nada, naid, subproj, lnr) 
+      (cust, pname, pdate, nada, naid, subproj, lnr, patches) 
       VALUES 
-      ($1, $2, $3, $4, $5, $6, $7)
+      ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `, [
       projectData.cust,
@@ -102,10 +116,14 @@ exports.createProject = async (projectData, username) => {
       currentDate,
       username,
       projectData.subproj || null,
-      nextLnr
+      nextLnr,
+      JSON.stringify(projectData.patches || [])
     ]);
-    
-    return new Project(result.rows[0]);
+    const row = result.rows[0];
+    if (typeof row.patches === 'string') {
+      try { row.patches = JSON.parse(row.patches); } catch { row.patches = []; }
+    }
+    return new Project(row);
   } catch (error) {
     throw new Error(`Fehler beim Erstellen des Projekts: ${error.message}`);
   }
@@ -151,6 +169,12 @@ exports.updateProject = async (cust, lnr, projectData, username) => {
       paramCount++;
     }
     
+    if (projectData.patches !== undefined) {
+      updateFields.push(`patches = $${paramCount}`);
+      values.push(JSON.stringify(projectData.patches));
+      paramCount++;
+    }
+    
     // Kunde und Laufnummer für WHERE-Klausel hinzufügen
     values.push(cust);
     values.push(lnr);
@@ -164,8 +188,11 @@ exports.updateProject = async (cust, lnr, projectData, username) => {
     `;
     
     const result = await db.query(query, values);
-    
-    return new Project(result.rows[0]);
+    const row = result.rows[0];
+    if (typeof row.patches === 'string') {
+      try { row.patches = JSON.parse(row.patches); } catch { row.patches = []; }
+    }
+    return new Project(row);
   } catch (error) {
     throw new Error(`Fehler beim Aktualisieren des Projekts: ${error.message}`);
   }

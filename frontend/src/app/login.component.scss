@@ -1,0 +1,39 @@
+// Bootstrap-Overrides und moderne Styles für Login
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.card {
+  border: none;
+  border-radius: 1.2rem;
+  box-shadow: 0 4px 32px rgba(25, 118, 210, 0.08), 0 1.5px 6px rgba(0,0,0,0.03);
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+  border: none;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background: linear-gradient(90deg, #1565c0 0%, #1976d2 100%);
+}
+
+.input-group-text {
+  background: #f3f6fa;
+  border: none;
+}
+
+.form-label {
+  font-weight: 500;
+}
+
+.alert-danger {
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+
+.link-primary {
+  font-weight: 500;
+}

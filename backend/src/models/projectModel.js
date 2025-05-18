@@ -8,6 +8,7 @@ class Project {
     this.naid = data.naid || null;       // Änderer-ID
     this.subproj = data.subproj || null; // Unterprojekte (komma-separiert)
     this.lnr = data.lnr || 0;            // Laufnummer
+    this.patches = data.patches || [];   // Inhalte (Array)
   }
 
   // Unterprojekte als Array zurückgeben

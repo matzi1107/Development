@@ -1,0 +1,9 @@
+@import "../styles";
+
+:host ::ng-deep .modal-backdrop {
+  z-index: 1050;
+}
+
+:host ::ng-deep .modal {
+  z-index: 1060;
+}

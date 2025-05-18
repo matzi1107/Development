@@ -1,0 +1,28 @@
+{
+  "/api": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/internal/api": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/api/customers": {
+    "target": "http://localhost:3000/internal/oneshot/cust",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": { "^/api/customers": "" },
+    "logLevel": "debug"
+  },
+  "/api/company": {
+    "target": "http://localhost:3000/api/company",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": { "^/api/company": "" },
+    "logLevel": "debug"
+  }
+}

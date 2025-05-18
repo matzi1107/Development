@@ -15,6 +15,7 @@ router.get('/info', companyController.getCompanyInfo);
 // Unternehmensinformationen verwalten
 router.post('/settings', companyController.createCompanySetting);
 router.put('/settings/:varkey', companyController.updateCompanySetting);
+router.put('/settings', companyController.updateAllCompanySettings);
 router.delete('/settings/:varkey', companyController.deleteCompanySetting);
 
 module.exports = router;

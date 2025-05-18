@@ -1,0 +1,34 @@
+<!-- Modernes Bootstrap Login-Formular -->
+<div class="container min-vh-100 d-flex align-items-center justify-content-center bg-light">
+  <div class="card shadow-lg p-4" style="min-width:340px; max-width:400px; width:100%; border-radius: 1.2rem;">
+    <div class="text-center mb-4">
+      <img src="assets/logo.svg" alt="Logo" width="48" height="48" class="mb-2" *ngIf="false"/>
+      <h2 class="fw-bold mb-1">Login</h2>
+      <p class="text-muted mb-0">Bitte melde dich an, um fortzufahren</p>
+    </div>
+    <form (ngSubmit)="onLogin()" autocomplete="off">
+      <div class="mb-3">
+        <label for="username" class="form-label">Benutzername</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person"></i></span>
+          <input id="username" name="username" type="text" class="form-control" [(ngModel)]="username" required autofocus />
+        </div>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Passwort</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock"></i></span>
+          <input id="password" name="password" [type]="hidePassword ? 'password' : 'text'" class="form-control" [(ngModel)]="password" required />
+          <button type="button" class="btn btn-outline-secondary" (click)="hidePassword = !hidePassword" tabindex="-1">
+            <i class="bi" [ngClass]="hidePassword ? 'bi-eye' : 'bi-eye-slash'"></i>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mb-2">Login</button>
+      <div *ngIf="error" class="alert alert-danger mt-2 mb-0 py-2 px-3 text-center" role="alert">{{ error }}</div>
+    </form>
+    <div class="text-center mt-3">
+      <a [routerLink]="['/register']" class="link-primary text-decoration-underline">Noch kein Konto? Registrieren</a>
+    </div>
+  </div>
+</div>

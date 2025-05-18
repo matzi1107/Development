@@ -1,0 +1,166 @@
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-8">
+      <div class="card shadow-sm p-4 mb-4" style="border-radius:1.2rem;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="fw-bold mb-0"><i class="bi bi-people me-2"></i>Kunden</h3>
+          <button class="btn btn-success d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#newCustomerModal">
+            <i class="bi bi-plus-lg"></i> Neuer Kunde
+          </button>
+        </div>
+        <div *ngIf="error" class="alert alert-danger text-center mb-3" role="alert">{{ error }}</div>
+        <div class="mb-3">
+          <input class="form-control" placeholder="Suche nach Name, Firma ..." [(ngModel)]="search" (input)="filterCustomers()" />
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Firma</th>
+                <th>Vorname</th>
+                <th>Nachname</th>
+                <th>Details</th>
+                <th style="width:110px">Aktionen</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of filteredCustomers">
+                <td>{{ c.betr }}</td>
+                <td>{{ c.vname }}</td>
+                <td>{{ c.nname }}</td>
+                <td>
+                  <button class="btn btn-outline-secondary btn-sm" (click)="showDetails(c.cust)">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </td>
+                <td>
+                  <button class="btn btn-outline-primary btn-sm me-1" (click)="startEdit(c)">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="!filteredCustomers.length">
+                <td colspan="5" class="text-muted text-center">Keine Kunden gefunden</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details-Modal -->
+  <div class="modal fade" id="detailsCustomerModal" tabindex="-1" aria-labelledby="detailsCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="detailsCustomerModalLabel">Kundendetails</h5>
+          <button type="button" class="btn-close" (click)="closeDetails()" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" *ngIf="detailsCustomer">
+          <div><strong>Firma:</strong> {{ detailsCustomer.betr }}</div>
+          <div><strong>Vorname:</strong> {{ detailsCustomer.vname }}</div>
+          <div><strong>Nachname:</strong> {{ detailsCustomer.nname }}</div>
+          <div><strong>Straße:</strong> {{ detailsCustomer.str }}</div>
+          <div><strong>PLZ:</strong> {{ detailsCustomer.postc }}</div>
+          <div><strong>Ort:</strong> {{ detailsCustomer.town }}</div>
+          <div><strong>Angelegt am:</strong> {{ detailsCustomer.aeda }}</div>
+          <div><strong>Anleger-ID:</strong> {{ detailsCustomer.aeid }}</div>
+          <div><strong>Geändert am:</strong> {{ detailsCustomer.nada }}</div>
+          <div><strong>Änderer-ID:</strong> {{ detailsCustomer.naid }}</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeDetails()">Schließen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit-Modal -->
+  <div class="modal fade" id="editCustomerModal" tabindex="-1" aria-labelledby="editCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form (ngSubmit)="saveEdit(); $event.preventDefault();" autocomplete="off">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editCustomerModalLabel">Kunde bearbeiten</h5>
+            <button type="button" class="btn-close" (click)="cancelEdit()" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" *ngIf="editCustomer">
+            <div class="mb-3">
+              <label class="form-label">Firma</label>
+              <input class="form-control" [(ngModel)]="editCustomer.betr" name="editBetr" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Vorname</label>
+              <input class="form-control" [(ngModel)]="editCustomer.vname" name="editVname" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Nachname</label>
+              <input class="form-control" [(ngModel)]="editCustomer.nname" name="editNname" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Straße</label>
+              <input class="form-control" [(ngModel)]="editCustomer.str" name="editStr" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">PLZ</label>
+              <input class="form-control" [(ngModel)]="editCustomer.postc" name="editPostc" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Ort</label>
+              <input class="form-control" [(ngModel)]="editCustomer.town" name="editTown" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Abbrechen</button>
+            <button type="submit" class="btn btn-success">Speichern</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal für neuen Kunden -->
+  <div class="modal fade" id="newCustomerModal" tabindex="-1" aria-labelledby="newCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form (ngSubmit)="createCustomer(); $event.preventDefault();" autocomplete="off">
+          <div class="modal-header">
+            <h5 class="modal-title" id="newCustomerModalLabel">Neuen Kunden anlegen</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="betr" class="form-label">Firma</label>
+              <input id="betr" name="betr" class="form-control" [(ngModel)]="newCustomer.betr" />
+            </div>
+            <div class="mb-3">
+              <label for="vname" class="form-label">Vorname</label>
+              <input id="vname" name="vname" class="form-control" [(ngModel)]="newCustomer.vname" />
+            </div>
+            <div class="mb-3">
+              <label for="nname" class="form-label">Nachname</label>
+              <input id="nname" name="nname" class="form-control" [(ngModel)]="newCustomer.nname" />
+            </div>
+            <div class="mb-3">
+              <label for="str" class="form-label">Straße</label>
+              <input id="str" name="str" class="form-control" [(ngModel)]="newCustomer.str" />
+            </div>
+            <div class="mb-3">
+              <label for="postc" class="form-label">PLZ</label>
+              <input id="postc" name="postc" class="form-control" [(ngModel)]="newCustomer.postc" />
+            </div>
+            <div class="mb-3">
+              <label for="town" class="form-label">Ort</label>
+              <input id="town" name="town" class="form-control" [(ngModel)]="newCustomer.town" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+            <button type="submit" class="btn btn-success">Anlegen</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -25,37 +25,30 @@ exports.getAllInvoices = async () => {
         CONCAT(c.vname, ' ', c.nname) AS customer_name,
         c.betr AS customer_company,
         p.pname AS project_name,
-        COALESCE(
-          (SELECT SUM(amount) FROM "int".payments WHERE reid = i.reid), 
-          0
-        ) as paid_amount
+        COALESCE((SELECT SUM(amount) FROM "int".payments WHERE reid = i.reid), 0) as paid_amount
       FROM "int".invoices i
       JOIN "int".customers c ON i.cust = c.cust
       LEFT JOIN "int".projects p ON i.cust = p.cust AND i.proj_lnr = p.lnr
-      ORDER BY i.issued_date DESC
+      ORDER BY i.renr DESC
     `);
-    
-    return result.rows.map(row => new Invoice({
-      reid: row.reid,
-      renr: row.renr,
-      cust: row.cust,
-      proj_lnr: row.proj_lnr,
-      issued_date: row.issued_date,
-      due_date: row.due_date,
-      total_amount: row.total_amount,
-      mwst: row.mwst,
-      mwstprz: row.mwstprz,
-      status: row.status,
-      notes: row.notes,
-      naid: row.naid,
-      nada: row.nada,
-      aeda: row.aeda,
-      aeid: row.aeid,
-      customerName: row.customer_name,
-      customerCompany: row.customer_company,
-      projectName: row.project_name,
-      paidAmount: row.paid_amount
-    }));
+    // Für jede Rechnung die Positionen abrufen
+    const invoices = [];
+    for (const row of result.rows) {
+      const itemsResult = await db.query(`
+        SELECT description, quantity, unit_price, tax_rate, amount
+        FROM "int".invoiceitems WHERE reid = $1 ORDER BY position_order
+      `, [row.reid]);
+      const items = itemsResult.rows;
+      const totalNet = items.length > 0 ? items.reduce((sum, p) => sum + (+p.unit_price * (+p.quantity || 1)), 0) : (typeof row.total_amount === 'number' ? row.total_amount : parseFloat(row.total_amount || 0));
+      const totalGross = items.length > 0 ? items.reduce((sum, p) => sum + (+p.amount || 0), 0) : +(totalNet * (1 + ((typeof row.mwstprz === 'number' ? row.mwstprz : parseFloat(row.mwstprz || 0)) / 100))).toFixed(2);
+      invoices.push({
+        ...row,
+        items,
+        totalNet,
+        totalGross
+      });
+    }
+    return invoices;
   } catch (error) {
     throw new Error(`Fehler beim Abrufen der Rechnungen: ${error.message}`);
   }
@@ -122,7 +115,7 @@ exports.getInvoiceById = async (id) => {
       SELECT 
         rpid, reid, description, quantity, unit_price, tax_rate, amount, position_order,
         naid, nada, aeda, aeid
-      FROM "int".invoice_items
+      FROM "int".invoiceitems
       WHERE reid = $1
       ORDER BY position_order
     `, [id]);
@@ -144,6 +137,11 @@ exports.getInvoiceById = async (id) => {
     // 4. Zusammenfassung erstellen
     return new InvoiceDetail(invoice, items, payments);
   } catch (error) {
+    console.error('getInvoiceById ERROR:', {
+      id,
+      message: error.message,
+      stack: error.stack
+    });
     throw new Error(`Fehler beim Abrufen der Rechnung: ${error.message}`);
   }
 };
@@ -211,10 +209,11 @@ exports.createInvoice = async (invoiceData, username) => {
         const positionOrder = i + 1;
         
         await client.query(`
-          INSERT INTO "int".invoice_items 
+          INSERT INTO "int".invoiceitems 
           (reid, description, quantity, unit_price, tax_rate, amount, position_order, naid)
           VALUES 
           ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING *
         `, [
           invoiceId,
           item.description,
@@ -242,91 +241,115 @@ exports.createInvoice = async (invoiceData, username) => {
 
 // Rechnung aktualisieren
 exports.updateInvoice = async (id, invoiceData, username) => {
+  const client = await db.pool.connect();
   try {
+    await client.query('BEGIN');
+
     // 1. Prüfen, ob die Rechnung existiert
-    const invoiceExists = await db.query(
+    const invoiceExists = await client.query(
       'SELECT COUNT(*) FROM "int".invoices WHERE reid = $1',
       [id]
     );
-    
     if (parseInt(invoiceExists.rows[0].count) === 0) {
+      await client.query('ROLLBACK');
       return null;
     }
-    
+
     // 2. Zu aktualisierende Felder und Werte sammeln
     const updateFields = ['aeda = NOW()', 'aeid = $1'];
     const values = [username];
     let paramCount = 2;
-    
     if (invoiceData.cust !== undefined) {
       updateFields.push(`cust = $${paramCount}`);
       values.push(invoiceData.cust);
       paramCount++;
     }
-    
     if (invoiceData.proj_lnr !== undefined) {
       updateFields.push(`proj_lnr = $${paramCount}`);
       values.push(invoiceData.proj_lnr);
       paramCount++;
     }
-    
     if (invoiceData.issued_date !== undefined) {
       updateFields.push(`issued_date = $${paramCount}`);
       values.push(invoiceData.issued_date);
       paramCount++;
     }
-    
     if (invoiceData.due_date !== undefined) {
       updateFields.push(`due_date = $${paramCount}`);
       values.push(invoiceData.due_date);
       paramCount++;
     }
-    
     if (invoiceData.total_amount !== undefined) {
       updateFields.push(`total_amount = $${paramCount}`);
       values.push(invoiceData.total_amount);
       paramCount++;
     }
-    
     if (invoiceData.mwst !== undefined) {
       updateFields.push(`mwst = $${paramCount}`);
       values.push(invoiceData.mwst);
       paramCount++;
     }
-    
     if (invoiceData.mwstprz !== undefined) {
+      // Ensure mwstprz is integer
       updateFields.push(`mwstprz = $${paramCount}`);
-      values.push(invoiceData.mwstprz);
+      values.push(parseInt(invoiceData.mwstprz));
       paramCount++;
     }
-    
     if (invoiceData.status !== undefined) {
       updateFields.push(`status = $${paramCount}`);
       values.push(invoiceData.status);
       paramCount++;
     }
-    
     if (invoiceData.notes !== undefined) {
       updateFields.push(`notes = $${paramCount}`);
       values.push(invoiceData.notes);
       paramCount++;
     }
-    
     // ID hinzufügen
     values.push(id);
-    
     const query = `
       UPDATE "int".invoices 
       SET ${updateFields.join(', ')} 
       WHERE reid = $${paramCount}
     `;
-    
-    await db.query(query, values);
-    
-    // 3. Aktualisierte Rechnung zurückgeben
-    return this.getInvoiceById(id);
+    await client.query(query, values);
+
+    // 3. Rechnungspositionen aktualisieren (delete all, insert new)
+    if (Array.isArray(invoiceData.items)) {
+      // Delete all old items
+      await client.query('DELETE FROM "int".invoiceitems WHERE reid = $1', [id]);
+      // Insert new items
+      for (let i = 0; i < invoiceData.items.length; i++) {
+        const item = invoiceData.items[i];
+        const positionOrder = i + 1;
+        await client.query(`
+          INSERT INTO "int".invoiceitems 
+          (reid, description, quantity, unit_price, tax_rate, amount, position_order, naid)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [
+          id,
+          item.description,
+          item.quantity,
+          item.unit_price,
+          parseInt(item.tax_rate), // Ensure integer
+          item.amount,
+          positionOrder,
+          username
+        ]);
+      }
+    }
+
+    // 4. Gesamtbetrag und MwSt der Rechnung aktualisieren
+    await exports.updateInvoiceTotals(client, id, username);
+
+    await client.query('COMMIT');
+    // 5. Aktualisierte Rechnung zurückgeben
+    return exports.getInvoiceById(id);
   } catch (error) {
+    await client.query('ROLLBACK');
     throw new Error(`Fehler beim Aktualisieren der Rechnung: ${error.message}`);
+  } finally {
+    client.release();
   }
 };
 
@@ -359,7 +382,7 @@ exports.deleteInvoice = async (id) => {
     
     // 3. Rechnungspositionen löschen
     await client.query(
-      'DELETE FROM "int".invoice_items WHERE reid = $1',
+      'DELETE FROM "int".invoiceitems WHERE reid = $1',
       [id]
     );
     
@@ -387,7 +410,7 @@ exports.getInvoiceItems = async (invoiceId) => {
       SELECT 
         rpid, reid, description, quantity, unit_price, tax_rate, amount, position_order,
         naid, nada, aeda, aeid
-      FROM "int".invoice_items
+      FROM "int".invoiceitems
       WHERE reid = $1
       ORDER BY position_order
     `, [invoiceId]);
@@ -408,7 +431,7 @@ exports.addInvoiceItem = async (invoiceId, itemData, username) => {
     // 1. Nächste Position ermitteln
     const maxPositionResult = await client.query(`
       SELECT COALESCE(MAX(position_order), 0) AS max_position
-      FROM "int".invoice_items
+      FROM "int".invoiceitems
       WHERE reid = $1
     `, [invoiceId]);
     
@@ -416,7 +439,7 @@ exports.addInvoiceItem = async (invoiceId, itemData, username) => {
     
     // 2. Rechnungsposition einfügen
     const result = await client.query(`
-      INSERT INTO "int".invoice_items 
+      INSERT INTO "int".invoiceitems 
       (reid, description, quantity, unit_price, tax_rate, amount, position_order, naid)
       VALUES 
       ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -456,7 +479,7 @@ exports.updateInvoiceItem = async (invoiceId, itemId, itemData, username) => {
     // 1. Prüfen, ob die Rechnungsposition existiert
     const itemExists = await client.query(`
       SELECT COUNT(*) 
-      FROM "int".invoice_items 
+      FROM "int".invoiceitems 
       WHERE rpid = $1 AND reid = $2
     `, [itemId, invoiceId]);
     
@@ -509,7 +532,7 @@ exports.updateInvoiceItem = async (invoiceId, itemId, itemData, username) => {
     values.push(itemId);
     
     const query = `
-      UPDATE "int".invoice_items 
+      UPDATE "int".invoiceitems 
       SET ${updateFields.join(', ')} 
       WHERE rpid = $${paramCount}
     `;
@@ -521,7 +544,7 @@ exports.updateInvoiceItem = async (invoiceId, itemId, itemData, username) => {
     
     // 4. Aktualisierte Rechnungsposition abrufen
     const result = await client.query(`
-      SELECT * FROM "int".invoice_items WHERE rpid = $1
+      SELECT * FROM "int".invoiceitems WHERE rpid = $1
     `, [itemId]);
     
     await client.query('COMMIT');
@@ -545,7 +568,7 @@ exports.deleteInvoiceItem = async (invoiceId, itemId, username) => {
     // 1. Prüfen, ob die Rechnungsposition existiert
     const itemExists = await client.query(`
       SELECT COUNT(*) 
-      FROM "int".invoice_items 
+      FROM "int".invoiceitems 
       WHERE rpid = $1 AND reid = $2
     `, [itemId, invoiceId]);
     
@@ -555,7 +578,7 @@ exports.deleteInvoiceItem = async (invoiceId, itemId, username) => {
     
     // 2. Rechnungsposition löschen
     await client.query(
-      'DELETE FROM "int".invoice_items WHERE rpid = $1',
+      'DELETE FROM "int".invoiceitems WHERE rpid = $1',
       [itemId]
     );
     
@@ -872,7 +895,7 @@ exports.updateInvoiceTotals = async (client, invoiceId, username) => {
       SELECT 
         SUM(amount) AS net_total,
         AVG(tax_rate) AS avg_tax_rate
-      FROM "int".invoice_items 
+      FROM "int".invoiceitems 
       WHERE reid = $1
     `, [invoiceId]);
     

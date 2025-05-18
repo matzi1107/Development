@@ -1,0 +1,177 @@
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-11 col-lg-10">
+      <div class="card shadow-sm p-4 mb-4" style="border-radius:1.2rem;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="fw-bold mb-0"><i class="bi bi-receipt me-2"></i>Rechnungen</h3>
+          <button class="btn btn-success d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#newInvoiceModal">
+            <i class="bi bi-plus-lg"></i> Neue Rechnung
+          </button>
+        </div>
+        <div *ngIf="error" class="alert alert-danger text-center mb-3" role="alert">{{ error }}</div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Nr.</th>
+                <th>Kunde</th>
+                <th>Datum</th>
+                <th>Status</th>
+                <th>Brutto</th> <!-- war vorher Netto -->
+                <th>Netto</th>  <!-- war vorher Brutto -->
+                <th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let inv of filteredInvoices">
+                <td>{{ inv.renr }}</td>
+                <td>{{ inv.customer }}</td>
+                <td>{{ inv.date | date:'yyyy-MM-dd' }}</td>
+                <td>{{ inv.status }}</td>
+                <td>{{ inv.totalGross | number:'1.2-2' }}</td> <!-- swapped: now Brutto in Netto column -->
+                <td>{{ inv.totalNet | number:'1.2-2' }}</td>   <!-- swapped: now Netto in Brutto column -->
+                <td>
+                  <button class="btn btn-outline-primary btn-sm me-1" (click)="startEdit(inv)">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm" (click)="deleteInvoice(inv.reid)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="!filteredInvoices.length">
+                <td colspan="7" class="text-muted text-center">Keine Rechnungen gefunden</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal für neue Rechnung -->
+  <div class="modal fade" id="newInvoiceModal" tabindex="-1" aria-labelledby="newInvoiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form (ngSubmit)="createInvoice(); $event.preventDefault();" autocomplete="off">
+          <div class="modal-header">
+            <h5 class="modal-title" id="newInvoiceModalLabel">Neue Rechnung anlegen</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div *ngIf="validationError" class="alert alert-danger text-center mb-3">{{ validationError }}</div>
+            <div class="mb-3">
+              <label class="form-label">Kunde</label>
+              <select class="form-select" [(ngModel)]="newInvoice.customer" name="newCustomer" required>
+                <option *ngFor="let c of customers" [ngValue]="c.cust">{{ c.displayName }}</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Datum</label>
+              <input type="date" class="form-control" [(ngModel)]="newInvoice.date" name="newDate" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Status</label>
+              <input class="form-control" [(ngModel)]="newInvoice.status" name="newStatus" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Positionen</label>
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Bezeichnung</th>
+                    <th>Brutto</th> <!-- war vorher Netto -->
+                    <th>Steuer (%)</th>
+                    <th>Netto</th>  <!-- war vorher Brutto -->
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let pos of newInvoice.positions; let i = index">
+                    <td><input class="form-control form-control-sm" [(ngModel)]="pos.description" name="desc{{i}}" /></td>
+                    <td><input type="number" class="form-control form-control-sm" [(ngModel)]="pos.gross" name="gross{{i}}" (input)="updateNet(pos); calcTotals('new')" /></td>
+                    <td><input type="number" class="form-control form-control-sm" [(ngModel)]="pos.vat" name="vat{{i}}" (input)="updateNet(pos); calcTotals('new')" /></td>
+                    <td><input type="number" class="form-control form-control-sm" [(ngModel)]="pos.net" name="net{{i}}" readonly /></td>
+                    <td><button class="btn btn-outline-danger btn-sm" type="button" (click)="removePosition(i, 'new')"><i class="bi bi-trash"></i></button></td>
+                  </tr>
+                </tbody>
+              </table>
+              <button class="btn btn-outline-success btn-sm" type="button" (click)="addPosition('new')"><i class="bi bi-plus"></i> Position</button>
+            </div>
+            <div class="mb-3">
+              <strong>Gesamt Netto:</strong> {{ newInvoice.totalNet | number:'1.2-2' }}<br>
+              <strong>Gesamt Brutto:</strong> {{ newInvoice.totalGross | number:'1.2-2' }}
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+            <button type="submit" class="btn btn-success">Anlegen</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit-Modal -->
+  <div class="modal fade" id="editInvoiceModal" tabindex="-1" aria-labelledby="editInvoiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form (ngSubmit)="saveEdit(); $event.preventDefault();" autocomplete="off">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editInvoiceModalLabel">Rechnung bearbeiten</h5>
+            <button type="button" class="btn-close" (click)="cancelEdit()" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" *ngIf="editInvoice">
+            <div *ngIf="validationError" class="alert alert-danger text-center mb-3">{{ validationError }}</div>
+            <div class="mb-3">
+              <label class="form-label">Kunde</label>
+              <select class="form-select" [(ngModel)]="editInvoice.customer" name="editCustomer" required>
+                <option *ngFor="let c of customers" [ngValue]="c.cust">{{ c.displayName }}</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Datum</label>
+              <input type="date" class="form-control" [(ngModel)]="editInvoice.date" name="editDate" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Status</label>
+              <input class="form-control" [(ngModel)]="editInvoice.status" name="editStatus" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Positionen</label>
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Bezeichnung</th>
+                    <th>Brutto</th> <!-- war vorher Netto -->
+                    <th>Steuer (%)</th>
+                    <th>Netto</th>  <!-- war vorher Brutto -->
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let pos of editInvoice.positions; let i = index">
+                    <td><input class="form-control form-control-sm" [(ngModel)]="pos.description" name="edesc{{i}}" /></td>
+                    <td><input type="number" class="form-control form-control-sm" [(ngModel)]="pos.gross" name="egross{{i}}" (input)="updateNet(pos); calcTotals('edit')" /></td>
+                    <td><input type="number" class="form-control form-control-sm" [(ngModel)]="pos.vat" name="evat{{i}}" (input)="updateNet(pos); calcTotals('edit')" /></td>
+                    <td><input type="number" class="form-control form-control-sm" [(ngModel)]="pos.net" name="enet{{i}}" readonly /></td>
+                    <td><button class="btn btn-outline-danger btn-sm" type="button" (click)="removePosition(i, 'edit')"><i class="bi bi-trash"></i></button></td>
+                  </tr>
+                </tbody>
+              </table>
+              <button class="btn btn-outline-success btn-sm" type="button" (click)="addPosition('edit')"><i class="bi bi-plus"></i> Position</button>
+            </div>
+            <div class="mb-3">
+              <strong>Gesamt Netto:</strong> {{ editInvoice.totalNet | number:'1.2-2' }}<br>
+              <strong>Gesamt Brutto:</strong> {{ editInvoice.totalGross | number:'1.2-2' }}
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Abbrechen</button>
+            <button type="submit" class="btn btn-success">Speichern</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

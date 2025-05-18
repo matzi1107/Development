@@ -125,3 +125,24 @@ exports.deleteCompanySetting = async (req, res) => {
     res.status(500).json({ message: 'Interner Serverfehler' });
   }
 };
+
+// Alle Unternehmenseinstellungen auf einmal aktualisieren
+exports.updateAllCompanySettings = async (req, res) => {
+  try {
+    const settings = req.body;
+    const username = req.user.username || 'system';
+    if (!settings || typeof settings !== 'object') {
+      return res.status(400).json({ message: 'Ungültige Daten für Unternehmenseinstellungen.' });
+    }
+    // Für jedes Feld ein Update ausführen
+    const results = [];
+    for (const [varkey, varval] of Object.entries(settings)) {
+      await companyService.updateCompanySetting(varkey, { varval, compid: 1 }, username);
+      results.push(varkey);
+    }
+    res.json({ message: 'Firmendaten erfolgreich aktualisiert.', updated: results });
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren der Unternehmenseinstellungen:', error);
+    res.status(500).json({ message: 'Interner Serverfehler' });
+  }
+};

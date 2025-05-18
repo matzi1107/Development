@@ -1,0 +1,70 @@
+<!-- Modernes Bootstrap Dashboard, Rechnungen unter Projekte -->
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-9">
+      <div class="card shadow-sm p-4 mb-4" style="border-radius:1.2rem;">
+        <h2 class="fw-bold mb-3 text-center">Willkommen, {{ user }}!</h2>
+        <div *ngIf="error" class="alert alert-danger text-center mb-4" role="alert">{{ error }}</div>
+        <div class="mb-4">
+          <h4 class="fw-semibold mb-3"><i class="bi bi-folder2-open me-2"></i>Meine Projekte</h4>
+          <ul class="list-group list-group-flush mb-0">
+            <li *ngFor="let project of projects" class="list-group-item d-flex flex-column align-items-start py-3">
+              <div class="fw-bold">{{ project.name }}</div>
+              <div class="text-muted small mb-1">{{ project.description }}</div>
+              <span class="badge bg-info text-dark mt-1">{{ project.status }}</span>
+            </li>
+            <li *ngIf="!projects.length" class="list-group-item text-muted text-center">Keine Projekte vorhanden</li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="fw-semibold mb-3"><i class="bi bi-receipt me-2"></i>Erstellte Rechnungen</h4>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Rechnungsnr.</th>
+                  <th>Projekt</th>
+                  <th style="white-space:nowrap; width:110px; font-size:0.98em;">Betrag&nbsp;(&euro;)</th>
+                  <th>Netto&nbsp;(&euro;)</th>
+                  <th>Brutto&nbsp;(&euro;)</th>
+                  <th>Datum</th>
+                  <th>Status</th>
+                  <th>Kunde</th>
+                  <th>Empfänger</th>
+                  <th style="white-space:nowrap; width:110px; font-size:0.98em;">Bezahlt&nbsp;(&euro;)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let invoice of invoices">
+                  <td>{{ invoice.number }}</td>
+                  <td>{{ invoice.project }}</td>
+                  <td style="white-space:nowrap; font-size:0.98em;">{{ invoice.amount | number:'1.2-2' }}</td>
+                  <td>{{ invoice.netto | number:'1.2-2' }}</td>
+                  <td>{{ invoice.brutto | number:'1.2-2' }}</td>
+                  <td>{{ invoice.dateFmt }}</td>
+                  <td>
+                    <span class="badge"
+                      [ngClass]="{
+                        'bg-success': invoice.status === 'paid',
+                        'bg-danger': invoice.status === 'overdue' || invoice.status === 'cancelled',
+                        'bg-warning text-dark': invoice.status === 'sent' || invoice.status === 'offen',
+                        'bg-secondary': invoice.status !== 'paid' && invoice.status !== 'overdue' && invoice.status !== 'cancelled' && invoice.status !== 'sent' && invoice.status !== 'offen'
+                      }">
+                      {{ invoice.status }}
+                    </span>
+                  </td>
+                  <td>{{ invoice.customer }}</td>
+                  <td>{{ invoice.empfaenger }}</td>
+                  <td style="white-space:nowrap; font-size:0.98em;">{{ invoice.paid | number:'1.2-2' }}</td>
+                </tr>
+                <tr *ngIf="!invoices.length">
+                  <td colspan="10" class="text-muted text-center">Keine Rechnungen vorhanden</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
