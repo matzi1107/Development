@@ -121,7 +121,7 @@ exports.getQuoteById = async (id) => {
       SELECT 
         qpid, qid, description, quantity, unit_price, tax_rate, amount, position_order,
         naid, nada, aeda, aeid
-      FROM "int".quote_items
+      FROM "int".quoteitems
       WHERE qid = $1
       ORDER BY position_order
     `, [id]);
@@ -199,7 +199,7 @@ exports.createQuote = async (quoteData, username) => {
         const positionOrder = i + 1;
         
         await client.query(`
-          INSERT INTO "int".quote_items 
+          INSERT INTO "int".quoteitems 
           (qid, description, quantity, unit_price, tax_rate, amount, position_order, naid)
           VALUES 
           ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -356,7 +356,7 @@ exports.deleteQuote = async (id) => {
     
     // 3. Angebotspositionen löschen
     await client.query(
-      'DELETE FROM "int".quote_items WHERE qid = $1',
+      'DELETE FROM "int".quoteitems WHERE qid = $1',
       [id]
     );
     
@@ -384,7 +384,7 @@ exports.getQuoteItems = async (quoteId) => {
       SELECT 
         qpid, qid, description, quantity, unit_price, tax_rate, amount, position_order,
         naid, nada, aeda, aeid
-      FROM "int".quote_items
+      FROM "int".quoteitems
       WHERE qid = $1
       ORDER BY position_order
     `, [quoteId]);
@@ -405,7 +405,7 @@ exports.addQuoteItem = async (quoteId, itemData, username) => {
     // 1. Nächste Position ermitteln
     const maxPositionResult = await client.query(`
       SELECT COALESCE(MAX(position_order), 0) AS max_position
-      FROM "int".quote_items
+      FROM "int".quoteitems
       WHERE qid = $1
     `, [quoteId]);
     
@@ -413,7 +413,7 @@ exports.addQuoteItem = async (quoteId, itemData, username) => {
     
     // 2. Angebotsposition einfügen
     const result = await client.query(`
-      INSERT INTO "int".quote_items 
+      INSERT INTO "int".quoteitems 
       (qid, description, quantity, unit_price, tax_rate, amount, position_order, naid)
       VALUES 
       ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -453,7 +453,7 @@ exports.updateQuoteItem = async (quoteId, itemId, itemData, username) => {
     // 1. Prüfen, ob die Angebotsposition existiert
     const itemExists = await client.query(`
       SELECT COUNT(*) 
-      FROM "int".quote_items 
+      FROM "int".quoteitems 
       WHERE qpid = $1 AND qid = $2
     `, [itemId, quoteId]);
     
@@ -506,7 +506,7 @@ exports.updateQuoteItem = async (quoteId, itemId, itemData, username) => {
     values.push(itemId);
     
     const query = `
-      UPDATE "int".quote_items 
+      UPDATE "int".quoteitems 
       SET ${updateFields.join(', ')} 
       WHERE qpid = $${paramCount}
     `;
@@ -518,7 +518,7 @@ exports.updateQuoteItem = async (quoteId, itemId, itemData, username) => {
     
     // 4. Aktualisierte Angebotsposition abrufen
     const result = await client.query(`
-      SELECT * FROM "int".quote_items WHERE qpid = $1
+      SELECT * FROM "int".quoteitems WHERE qpid = $1
     `, [itemId]);
     
     await client.query('COMMIT');
@@ -542,7 +542,7 @@ exports.deleteQuoteItem = async (quoteId, itemId, username) => {
     // 1. Prüfen, ob die Angebotsposition existiert
     const itemExists = await client.query(`
       SELECT COUNT(*) 
-      FROM "int".quote_items 
+      FROM "int".quoteitems 
       WHERE qpid = $1 AND qid = $2
     `, [itemId, quoteId]);
     
@@ -552,7 +552,7 @@ exports.deleteQuoteItem = async (quoteId, itemId, username) => {
     
     // 2. Angebotsposition löschen
     await client.query(
-      'DELETE FROM "int".quote_items WHERE qpid = $1',
+      'DELETE FROM "int".quoteitems WHERE qpid = $1',
       [itemId]
     );
     
@@ -595,7 +595,7 @@ exports.convertToInvoice = async (id, username) => {
     
     // 3. Angebotspositionen abrufen
     const quoteItemsResult = await client.query(`
-      SELECT * FROM "int".quote_items WHERE qid = $1 ORDER BY position_order
+      SELECT * FROM "int".quoteitems WHERE qid = $1 ORDER BY position_order
     `, [id]);
     
     const quoteItems = quoteItemsResult.rows;
@@ -755,7 +755,7 @@ exports.updateQuoteTotals = async (client, quoteId, username) => {
       SELECT 
         SUM(amount) AS net_total,
         AVG(tax_rate) AS avg_tax_rate
-      FROM "int".quote_items 
+      FROM "int".quoteitems 
       WHERE qid = $1
     `, [quoteId]);
     

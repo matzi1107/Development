@@ -1,4 +1,4 @@
-//Start with npm run dev
+//Startwithnpmrundev
 
 const express = require('express');
 const cors = require('cors');
@@ -545,6 +545,7 @@ app.use('/internal/oneshot/quote', require('./routes/quoteRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes'));
 app.use('/api/invoices', require('./routes/invoiceRoutes'));
 app.use('/api/testcompany', require('./middleware/auth').verifyToken, require('./controllers/companyController').getAllCompanySettings);
+app.use('/api/quotes', require('./routes/quoteRoutes'));
 
 // API-Routen
 app.get('/internal/api/test', auth.verifyToken, (req, res) => {

@@ -26,6 +26,11 @@ export const routes: Routes = [
     loadComponent: () => import('./company.component').then(m => m.CompanyComponent),
     canActivate: [AuthGuard]
   },
+  {
+    path: 'angebote',
+    loadComponent: () => import('./angebote.component').then(m => m.AngeboteComponent),
+    canActivate: [AuthGuard]
+  },
   { path: 'error', component: ErrorComponent },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];

@@ -18,18 +18,18 @@
     "pathRewrite": { "^/api/customers": "" },
     "logLevel": "debug"
   },
+  "/api/companysettings": {
+    "target": "http://localhost:3000/internal/oneshot/company/settings",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": { "^/api/companysettings": "" },
+    "logLevel": "debug"
+  },
   "/api/company": {
-    "target": "http://localhost:3000/api/company",
+    "target": "http://localhost:3000/internal/oneshot/company/info",
     "secure": false,
     "changeOrigin": true,
     "pathRewrite": { "^/api/company": "" },
-    "logLevel": "debug"
-  },
-  "/api/quotes": {
-    "target": "http://localhost:3000/api/quotes",
-    "secure": false,
-    "changeOrigin": true,
-    "pathRewrite": { "^/api/quotes": "" },
     "logLevel": "debug"
   }
 }

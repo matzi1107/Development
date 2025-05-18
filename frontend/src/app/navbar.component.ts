@@ -21,6 +21,7 @@ import { RouterModule, Router } from '@angular/router';
             <li class="nav-item"><a class="nav-link" routerLink="/kunden" routerLinkActive="active">Kunden</a></li>
             <li class="nav-item"><a class="nav-link" routerLink="/rechnungen" routerLinkActive="active">Rechnungen</a></li>
             <li class="nav-item"><a class="nav-link" routerLink="/firmenintern" routerLinkActive="active">Firmenintern</a></li>
+            <li class="nav-item"><a class="nav-link" routerLink="/angebote" routerLinkActive="active">Angebote</a></li>
           </ul>
           <button class="btn btn-light d-flex align-items-center gap-2 px-3 fw-semibold" (click)="logout()">
             <i class="bi bi-box-arrow-right"></i> Logout
