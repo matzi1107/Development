@@ -636,7 +636,7 @@ exports.convertToInvoice = async (id, username) => {
     // 7. Rechnungspositionen erstellen
     for (const item of quoteItems) {
       await client.query(`
-        INSERT INTO "int".invoice_items 
+        INSERT INTO "int".invoiceitems 
         (reid, description, quantity, unit_price, tax_rate, amount, position_order, naid)
         VALUES 
         ($1, $2, $3, $4, $5, $6, $7, $8)
