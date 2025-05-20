@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Rechnungsvorlage</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.4;
+    }
+    .invoice-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      padding: 0;
+    }
+    .header {
+      text-align: center;
+      padding: 40px 40px 30px 40px;
+      border-bottom: 4px solid #000;
+      position: relative;
+    }
+    .logo-circle {
+      width: 80px;
+      height: 80px;
+      background: #000;
+      border-radius: 50%;
+      margin: 0 auto 20px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    .company-name {
+      font-size: 18px;
+      font-weight: normal;
+      letter-spacing: 4px;
+      margin-bottom: 25px;
+      text-transform: uppercase;
+    }
+    .company-details {
+      font-size: 11px;
+      color: #666;
+      line-height: 1.3;
+      margin-bottom: 30px;
+    }
+    .invoice-info {
+      background: #f8f8f8;
+      padding: 20px 40px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .invoice-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .invoice-number {
+      font-size: 16px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    .invoice-date {
+      font-size: 12px;
+      color: #666;
+    }
+    .recipient-section {
+      padding: 30px 40px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .recipient-details {
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .content {
+      padding: 0 40px;
+    }
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+    }
+    .items-table th {
+      text-align: left;
+      padding: 15px 0;
+      border-bottom: 2px solid #000;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .items-table td {
+      padding: 12px 0;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 13px;
+    }
+    .items-table tr:last-child td {
+      border-bottom: none;
+    }
+    .qty, .price, .total {
+      text-align: right;
+      width: 80px;
+      padding-right: 10px;
+    }
+    .summary-section {
+      border-top: 2px solid #000;
+      padding: 20px 0;
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .summary-content {
+      width: 300px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      font-size: 13px;
+    }
+    .summary-row.total {
+      display: flex !important;
+      justify-content: space-between !important;
+      font-size: 16px;
+      font-weight: bold;
+      padding-top: 10px;
+      margin-top: 10px;
+      border-top: 1px solid #000;
+      width: 100% !important;
+    }
+    .summary-row.total span:first-child {
+      text-align: left !important;
+      flex: 0 0 auto !important;
+    }
+    .summary-row.total span:last-child {
+      text-align: right !important;
+      flex: 1 1 auto !important;
+      margin-left: 20px !important;
+    }
+    .payment-section {
+      background: #f8f8f8;
+      padding: 25px 40px;
+      margin-top: 40px;
+    }
+    .payment-title {
+      font-size: 13px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .payment-details {
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 25px;
+    }
+    .payment-info-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .payment-info-column {
+      background: #fff;
+      padding: 15px;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .payment-info-title {
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      color: #666;
+    }
+    .payment-info-content {
+      font-size: 12px;
+      font-weight: bold;
+      color: #333;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px 40px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 11px;
+      color: #666;
+    }
+
+    @media print {
+      body {
+        background: #fff !important;
+        color: #000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .invoice-container {
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100vw !important;
+        border-radius: 0 !important;
+      }
+      .header, .invoice-info, .recipient-section, .content, .summary-section, .payment-section, .footer {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+      .payment-section {
+        margin-top: 20px !important;
+      }
+      .footer {
+        border-top: 1px solid #e0e0e0 !important;
+      }
+      /* Entferne Browser-Header/Footer beim Druck, wenn möglich */
+      @page {
+        margin: 15mm 10mm 15mm 10mm;
+      }
+      a, button, .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    <div class="header">
+      <div class="logo-circle">{{Logo}}</div>
+      <div class="company-name">{{Firmenname}}</div>
+      <div class="company-details">
+        {{Firmenname}}<br>
+        {{Straße}}<br>
+        {{PLZ}} {{Ort}}<br>
+        {{Email}}<br>
+        {{Website}}
+      </div>
+    </div>
+
+    <div class="invoice-info">
+      <div class="invoice-meta">
+        <div>
+          <div class="invoice-number">INVOICE #{{Rechnungsnummer}}</div>
+        </div>
+        <div class="invoice-date">
+          {{Rechnungsdatum}}
+        </div>
+      </div>
+    </div>
+
+    <div class="recipient-section">
+      <div class="recipient-details">
+        {{Kunde}}<br>
+        {{Kundenstraße}}<br>
+        {{KundenPLZ}} {{KundenOrt}}
+      </div>
+    </div>
+
+    <div class="content">
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Beschreibung</th>
+            <th class="qty">Menge</th>
+            <th class="price">Preis</th>
+            <th class="total">Gesamt</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Leistung beschreibung hier</td>
+            <td class="qty">12</td>
+            <td class="price">€50,00</td>
+            <td class="total">€600,00</td>
+          </tr>
+          <tr>
+            <td>Leistung beschreibung hier</td>
+            <td class="qty">12</td>
+            <td class="price">€50,00</td>
+            <td class="total">€600,00</td>
+          </tr>
+          <tr>
+            <td>Leistung beschreibung hier</td>
+            <td class="qty">12</td>
+            <td class="price">€50,00</td>
+            <td class="total">€600,00</td>
+          </tr>
+          <tr>
+            <td>Leistung beschreibung hier</td>
+            <td class="qty">12</td>
+            <td class="price">€50,00</td>
+            <td class="total">€600,00</td>
+          </tr>
+          <tr>
+            <td>Leistung beschreibung hier</td>
+            <td class="qty">12</td>
+            <td class="price">€50,00</td>
+            <td class="total">€600,00</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="summary-section">
+        <div class="summary-content">
+          <div class="summary-row">
+            <span>Zwischensumme:</span>
+            <span>€{{NettoSumme}}</span>
+          </div>
+          <div class="summary-row">
+            <span>MwSt ({{MwStSatz}}%):</span>
+            <span>€{{MwStBetrag}}</span>
+          </div>
+          <div class="summary-row total">
+            <span>Rechnungsbetrag:</span>
+            <span>€{{BruttoSumme}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="payment-section">
+      <div class="payment-title">Zahlungsbedingungen</div>
+      <div class="payment-details">
+        Zahlbar bis {{Faelligkeitsdatum}} unter Angabe der Rechnungsnummer.
+      </div>
+      
+      <div class="payment-info-grid">
+        <div class="payment-info-column">
+          <div class="payment-info-title">Bank</div>
+          <div class="payment-info-content">{{Bank}}</div>
+        </div>
+        <div class="payment-info-column">
+          <div class="payment-info-title">IBAN</div>
+          <div class="payment-info-content">{{IBAN}}</div>
+        </div>
+        <div class="payment-info-column">
+          <div class="payment-info-title">BIC</div>
+          <div class="payment-info-content">{{BIC}}</div>
+        </div>
+        <div class="payment-info-column">
+          <div class="payment-info-title">Verwendungszweck</div>
+          <div class="payment-info-content">{{Rechnungsnummer}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      {{Firmenname}} &bull; {{Straße}}, {{PLZ}} {{Ort}} &bull; UID: {{UID}}<br>
+      Tel: {{Telefon}} &bull; E-Mail: {{Email}}
+    </div>
+  </div>
+
+  <script>
+(function() {
+  // Nur ausführen, wenn als Druck aus dem Rechnungsmodul geöffnet
+  if (window.location.search.includes('print=1')) {
+    const dataRaw = localStorage.getItem('invoice-print-data');
+    if (!dataRaw) return;
+    const data = JSON.parse(dataRaw);
+    
+    // Hilfsfunktion für Datumsformatierung
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr; // Fallback falls Parsing fehlschlägt
+      return date.toLocaleDateString('de-AT', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+    
+    // Hilfsfunktion für Platzhalter ersetzen
+    // Firmeninfos
+    function setHtml(sel, value) {
+      const el = document.querySelector(sel);
+      if (el) el.innerHTML = value || '';
+    }
+    setHtml('.company-name', data.companyInfo?.name);
+    setHtml('.company-details', `${data.companyInfo?.name || ''}<br>${data.companyInfo?.street || ''}<br>${data.companyInfo?.postalCode || ''} ${data.companyInfo?.city || ''}<br>${data.companyInfo?.email || ''}<br>${data.companyInfo?.website || ''}`);
+    // Logo (optional)
+    if (data.companyInfo?.logoUrl) {
+      const logo = document.querySelector('.logo-circle');
+      if (logo) {
+        logo.style.background = 'none';
+        logo.innerHTML = `<img src="${data.companyInfo.logoUrl}" alt="Logo" style="max-width:70px;max-height:70px;">`;
+      }
+    }
+    // Rechnungsnummer, Datum
+    setHtml('.invoice-number', `INVOICE #${data.invoice?.renr}`);
+    setHtml('.invoice-date', formatDate(data.invoice?.issued_date));
+    // Empfänger
+    setHtml('.recipient-details', `${data.customer?.betr || ''} ${data.customer?.vname || ''} ${data.customer?.nname || ''}<br>${data.customer?.str || ''}<br>${data.customer?.postc || ''} ${data.customer?.town || ''}`);
+    // Zahlungsziel
+    setHtml('.payment-details', `Zahlbar bis ${formatDate(data.invoice?.due_date)} unter Angabe der Rechnungsnummer.`);
+    // Bankdaten
+    const bankFields = [
+      { sel: '.payment-info-content', val: data.companyInfo?.bankName },
+      { sel: '.payment-info-content', val: data.companyInfo?.iban },
+      { sel: '.payment-info-content', val: data.companyInfo?.bic },
+      { sel: '.payment-info-content', val: data.invoice?.renr }
+    ];
+    document.querySelectorAll('.payment-info-content').forEach((el, i) => {
+      el.textContent = bankFields[i]?.val || '';
+    });
+    // Summen
+    function formatEuro(val) {
+      if (val == null || val === '' || isNaN(val)) return '';
+      return `€${(+val).toLocaleString('de-AT', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+    }
+    // MwSt-Satz
+    const mwstSatz = (typeof data.invoice?.mwstprz === 'number' || (data.invoice?.mwstprz && !isNaN(data.invoice?.mwstprz))) ? data.invoice.mwstprz : (data.items && data.items[0] ? data.items[0].tax_rate : '');
+    // Zwischensumme (Netto)
+    let totalNet = data.invoice?.totalNet;
+    if ((totalNet == null || totalNet === '' || isNaN(totalNet)) && Array.isArray(data.items)) {
+      totalNet = data.items.reduce((sum, item) => sum + (+item.unit_price * (+item.quantity || 1)), 0);
+    }
+    // Rechnungsbetrag (Brutto)
+    let totalGross = data.invoice?.totalGross;
+    if ((totalGross == null || totalGross === '' || isNaN(totalGross)) && Array.isArray(data.items)) {
+      totalGross = data.items.reduce((sum, item) => sum + (+item.amount || 0), 0);
+    }
+    document.querySelectorAll('.summary-row')[0].querySelector('span:nth-child(2)').textContent = formatEuro(totalNet);
+    document.querySelectorAll('.summary-row')[1].querySelector('span:nth-child(1)').innerHTML = `MwSt (${mwstSatz}%):`;
+    document.querySelectorAll('.summary-row')[1].querySelector('span:nth-child(2)').textContent = formatEuro(data.invoice?.mwst);
+    
+    // Rechnungsbetrag mit mehrfachem Forcing
+    const totalRow = document.querySelector('.summary-row.total');
+    if (totalRow) {
+      // HTML komplett neu setzen
+      totalRow.innerHTML = `<span style="text-align: left !important;">Rechnungsbetrag:</span><span style="text-align: right !important; margin-left: auto !important;">${formatEuro(totalGross)}</span>`;
+      
+      // Mehrfaches Forcing der Styles
+      totalRow.style.setProperty('display', 'flex', 'important');
+      totalRow.style.setProperty('justify-content', 'space-between', 'important');
+      totalRow.style.setProperty('width', '100%', 'important');
+      
+      // Spans auch individual stylen
+      const spans = totalRow.querySelectorAll('span');
+      if (spans[0]) {
+        spans[0].style.setProperty('text-align', 'left', 'important');
+        spans[0].style.setProperty('flex', '0 0 auto', 'important');
+      }
+      if (spans[1]) {
+        spans[1].style.setProperty('text-align', 'right', 'important');
+        spans[1].style.setProperty('flex', '1 1 auto', 'important');
+        spans[1].style.setProperty('margin-left', 'auto', 'important');
+      }
+      
+      // Falls es immer noch nicht klappt, setTimeout für verzögerte Anwendung
+      setTimeout(() => {
+        if (totalRow) {
+          totalRow.style.setProperty('display', 'flex', 'important');
+          totalRow.style.setProperty('justify-content', 'space-between', 'important');
+          const rightSpan = totalRow.querySelector('span:last-child');
+          if (rightSpan) {
+            rightSpan.style.setProperty('text-align', 'right', 'important');
+            rightSpan.style.setProperty('margin-left', 'auto', 'important');
+          }
+        }
+      }, 100);
+    }
+    
+    // Positionen
+    const tbody = document.querySelector('.items-table tbody');
+    if (tbody && Array.isArray(data.items)) {
+      tbody.innerHTML = data.items.map(item =>
+        `<tr><td>${item.description || ''}</td><td class='qty'>${item.quantity || ''}</td><td class='price'>${formatEuro(item.unit_price)}</td><td class='total'>${formatEuro(item.amount)}</td></tr>`
+      ).join('');
+    }
+    // Footer
+    setHtml('.footer', `${data.companyInfo?.name || ''} • ${data.companyInfo?.street || ''}, ${data.companyInfo?.postalCode || ''} ${data.companyInfo?.city || ''} • UID: ${data.companyInfo?.vatId || ''}<br>Tel: ${data.companyInfo?.phone || ''} • E-Mail: ${data.companyInfo?.email || ''}`);
+    // Nach kurzem Timeout drucken und Fenster schließen
+    setTimeout(() => { window.print(); }, 300);
+  }
+})();
+</script>
+</body>
+</html>

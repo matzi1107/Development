@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Angebotsvorlage</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: 'Arial', sans-serif; background: #f5f5f5; color: #333; margin: 0; padding: 20px; line-height: 1.4; }
+    .offer-container { max-width: 800px; margin: 0 auto; background: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.1); padding: 0; }
+    .header { text-align: center; padding: 40px 40px 30px 40px; border-bottom: 4px solid #000; position: relative; }
+    .logo-circle { width: 80px; height: 80px; background: #000; border-radius: 50%; margin: 0 auto 20px auto; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; font-weight: bold; letter-spacing: 2px; }
+    .company-name { font-size: 18px; font-weight: normal; letter-spacing: 4px; margin-bottom: 25px; text-transform: uppercase; }
+    .company-details { font-size: 11px; color: #666; line-height: 1.3; margin-bottom: 30px; }
+    .offer-info { background: #f8f8f8; padding: 20px 40px; border-bottom: 1px solid #e0e0e0; }
+    .offer-meta { display: flex; justify-content: space-between; align-items: center; }
+    .offer-number { font-size: 16px; font-weight: bold; letter-spacing: 2px; }
+    .offer-date { font-size: 12px; color: #666; }
+    .recipient-section { padding: 30px 40px; border-bottom: 1px solid #e0e0e0; }
+    .recipient-details { font-size: 13px; line-height: 1.6; }
+    .content { padding: 0 40px; }
+    .items-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+    .items-table th { text-align: left; padding: 15px 0; border-bottom: 2px solid #000; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+    .items-table td { padding: 12px 0; border-bottom: 1px solid #e0e0e0; font-size: 13px; }
+    .items-table tr:last-child td { border-bottom: none; }
+    .qty, .price, .total { text-align: right; width: 80px; padding-right: 10px; }
+    .summary-section { border-top: 2px solid #000; padding: 20px 0; margin-top: 20px; display: flex; justify-content: flex-end; }
+    .summary-content { width: 300px; }
+    .summary-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
+    .summary-row.total { display: flex !important; justify-content: space-between !important; font-size: 16px; font-weight: bold; padding-top: 10px; margin-top: 10px; border-top: 1px solid #000; width: 100% !important; }
+    .summary-row.total span:first-child { text-align: left !important; flex: 0 0 auto !important; }
+    .summary-row.total span:last-child { text-align: right !important; flex: 1 1 auto !important; margin-left: 20px !important; }
+    .footer { text-align: center; padding: 20px 40px; border-top: 1px solid #e0e0e0; font-size: 11px; color: #666; }
+    @media print { body { background: #fff !important; color: #000 !important; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } .offer-container { box-shadow: none !important; margin: 0 !important; padding: 0 !important; max-width: 100vw !important; border-radius: 0 !important; } .header, .offer-info, .recipient-section, .content, .summary-section, .footer { padding-left: 0 !important; padding-right: 0 !important; } .footer { border-top: 1px solid #e0e0e0 !important; } @page { margin: 15mm 10mm 15mm 10mm; } a, button, .no-print { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="offer-container">
+    <div class="header">
+      <div class="logo-circle">{{Logo}}</div>
+      <div class="company-name">{{Firmenname}}</div>
+      <div class="company-details">
+        {{Firmenname}}<br>
+        {{Straße}}<br>
+        {{PLZ}} {{Ort}}<br>
+        {{Email}}<br>
+        {{Website}}
+      </div>
+    </div>
+    <div class="offer-info">
+      <div class="offer-meta">
+        <div>
+          <div class="offer-number">ANGEBOT #{{Angebotsnummer}}</div>
+        </div>
+        <div class="offer-date">
+          {{Angebotsdatum}}
+        </div>
+      </div>
+    </div>
+    <div class="recipient-section">
+      <div class="recipient-details">
+        {{Kunde}}<br>
+        {{Kundenstraße}}<br>
+        {{KundenPLZ}} {{KundenOrt}}
+      </div>
+    </div>
+    <div class="content">
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Beschreibung</th>
+            <th class="qty">Menge</th>
+            <th class="price">Preis</th>
+            <th class="total">Gesamt</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Leistung beschreibung hier</td>
+            <td class="qty">12</td>
+            <td class="price">€50,00</td>
+            <td class="total">€600,00</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="summary-section">
+        <div class="summary-content">
+          <div class="summary-row">
+            <span>Zwischensumme:</span>
+            <span>€{{NettoSumme}}</span>
+          </div>
+          <div class="summary-row">
+            <span>MwSt ({{MwStSatz}}%):</span>
+            <span>€{{MwStBetrag}}</span>
+          </div>
+          <div class="summary-row total">
+            <span>Gesamtbetrag:</span>
+            <span>€{{BruttoSumme}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      {{Firmenname}} &bull; {{Straße}}, {{PLZ}} {{Ort}} &bull; UID: {{UID}}<br>
+      Tel: {{Telefon}} &bull; E-Mail: {{Email}}
+    </div>
+  </div>
+  <script>
+(function() {
+  if (window.location.search.includes('print=1')) {
+    const dataRaw = localStorage.getItem('offer-print-data');
+    if (!dataRaw) return;
+    const data = JSON.parse(dataRaw);
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      return date.toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+    function setHtml(sel, value) {
+      const el = document.querySelector(sel);
+      if (el) el.innerHTML = value || '';
+    }
+    setHtml('.company-name', data.companyInfo?.name);
+    setHtml('.company-details', `${data.companyInfo?.name || ''}<br>${data.companyInfo?.street || ''}<br>${data.companyInfo?.postalCode || ''} ${data.companyInfo?.city || ''}<br>${data.companyInfo?.email || ''}<br>${data.companyInfo?.website || ''}`);
+    if (data.companyInfo?.logoUrl) {
+      const logo = document.querySelector('.logo-circle');
+      if (logo) {
+        logo.style.background = 'none';
+        logo.innerHTML = `<img src="${data.companyInfo.logoUrl}" alt="Logo" style="max-width:70px;max-height:70px;">`;
+      }
+    }
+    setHtml('.offer-number', `ANGEBOT #${data.offer?.nr}`);
+    setHtml('.offer-date', formatDate(data.offer?.issued_date));
+    setHtml('.recipient-details', `${data.customer?.betr || ''} ${data.customer?.vname || ''} ${data.customer?.nname || ''}<br>${data.customer?.str || ''}<br>${data.customer?.postc || ''} ${data.customer?.town || ''}`);
+    // Summen
+    function formatEuro(val) {
+      if (val == null || val === '' || isNaN(val)) return '';
+      return `€${(+val).toLocaleString('de-AT', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+    }
+    // MwSt-Satz
+    const mwstSatz = (typeof data.offer?.mwstprz === 'number' || (data.offer?.mwstprz && !isNaN(data.offer?.mwstprz))) ? Number(data.offer.mwstprz) : (data.items && data.items[0] ? Number(data.items[0].tax_rate) : 0);
+    // Brutto (Eingabewert)
+    let totalGross = data.offer?.totalGross;
+    if ((totalGross == null || totalGross === '' || isNaN(totalGross))) {
+      if (Array.isArray(data.items)) {
+        totalGross = data.items.reduce((sum, item) => sum + ((+item.unit_price || 0) * (+item.quantity || 0)), 0);
+      } else {
+        totalGross = 0;
+      }
+    }
+    // Netto = Brutto / (1 + MwStSatz/100)
+    let totalNet = 0;
+    if (typeof mwstSatz === 'number' && !isNaN(mwstSatz) && mwstSatz > 0) {
+      totalNet = +(totalGross / (1 + mwstSatz / 100)).toFixed(2);
+    } else {
+      totalNet = +totalGross;
+    }
+    // MwSt-Betrag = Brutto - Netto
+    let totalVat = +(totalGross - totalNet).toFixed(2);
+    // Fallback falls explizit gespeichert
+    if (typeof data.offer?.mwst === 'number' && !isNaN(data.offer.mwst)) {
+      totalVat = +data.offer.mwst;
+    }
+    document.querySelectorAll('.summary-row')[0].querySelector('span:nth-child(2)').textContent = formatEuro(totalNet);
+    document.querySelectorAll('.summary-row')[1].querySelector('span:nth-child(1)').innerHTML = `MwSt (${mwstSatz}%):`;
+    document.querySelectorAll('.summary-row')[1].querySelector('span:nth-child(2)').textContent = formatEuro(totalVat);
+    document.querySelectorAll('.summary-row.total span:nth-child(2)')[0].textContent = formatEuro(totalGross);
+    // Brutto rechtsbündig
+    const summaryTotalRow = document.querySelector('.summary-row.total span:nth-child(2)');
+    if (summaryTotalRow) summaryTotalRow.style.textAlign = 'right';
+    // Positionen
+    const tbody = document.querySelector('.items-table tbody');
+    if (tbody && Array.isArray(data.items)) {
+      tbody.innerHTML = data.items.map(item =>
+        `<tr><td>${item.description || ''}</td><td class='qty'>${item.quantity || ''}</td><td class='price'>${formatEuro(item.unit_price)}</td><td class='total'>${formatEuro((+item.unit_price || 0) * (+item.quantity || 0))}</td></tr>`
+      ).join('');
+    }
+    setHtml('.footer', `${data.companyInfo?.name || ''} • ${data.companyInfo?.street || ''}, ${data.companyInfo?.postalCode || ''} ${data.companyInfo?.city || ''} • UID: ${data.companyInfo?.vatId || ''}<br>Tel: ${data.companyInfo?.phone || ''} • E-Mail: ${data.companyInfo?.email || ''}`);
+    setTimeout(() => { window.print(); }, 300);
+  }
+})();
+  </script>
+</body>
+</html>

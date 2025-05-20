@@ -172,10 +172,19 @@
               </button>
               <button class="btn btn-primary btn-sm" (click)="editQuoteModal(quote)"><i class="bi bi-pencil"></i></button>
               <button class="btn btn-danger btn-sm" (click)="deleteQuote(quote)"><i class="bi bi-trash"></i></button>
+              <button class="btn btn-outline-primary btn-sm me-1" (click)="printOfferPdf(quote)">
+                <i class="bi bi-printer"></i> Drucken
+              </button>
             </div>
           </td>
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <div class="text-center mt-4">
+    <a class="btn btn-outline-primary" href="/angebot-vorlage.html" target="_blank" rel="noopener">
+      Angebotsvorlage ansehen
+    </a>
   </div>
 </div>

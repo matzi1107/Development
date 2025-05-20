@@ -3,6 +3,9 @@
     <div class="col-12 col-md-11 col-lg-10">
       <div class="card shadow-sm p-4 mb-4" style="border-radius:1.2rem;">
         <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2>Rechnungen</h2>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
           <h3 class="fw-bold mb-0"><i class="bi bi-receipt me-2"></i>Rechnungen</h3>
           <button class="btn btn-success d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#newInvoiceModal">
             <i class="bi bi-plus-lg"></i> Neue Rechnung
@@ -34,6 +37,9 @@
                   <button class="btn btn-outline-primary btn-sm me-1" (click)="startEdit(inv)">
                     <i class="bi bi-pencil"></i>
                   </button>
+                  <button class="btn btn-outline-secondary btn-sm me-1" (click)="printInvoice(inv)">
+                    <i class="bi bi-printer"></i>
+                  </button>
                   <button class="btn btn-outline-danger btn-sm" (click)="deleteInvoice(inv.reid)">
                     <i class="bi bi-trash"></i>
                   </button>
@@ -45,6 +51,11 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Button zum Öffnen der Rechnungsvorlage als statisches Asset -->
+        <a class="btn btn-outline-primary" href="/rechnung-vorlage.html" target="_blank" rel="noopener">
+          Vorlage ansehen
+        </a>
       </div>
     </div>
   </div>

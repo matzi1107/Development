@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
+pdfMake.vfs = pdfFonts.vfs;
 
 interface InvoicePosition {
   description: string;
@@ -325,6 +328,207 @@ export class RechnungenComponent implements OnInit {
     }
   }
 
+  async printInvoice(inv: any) {
+    // 1. Rechnungsdaten laden (wie bisher)
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`/api/invoices/${inv.reid}/pdf-data`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Fehler beim Laden der Rechnungsdaten');
+      const data = await res.json();
+      // 2. Daten im localStorage speichern (Schlüssel: invoice-print-data)
+      localStorage.setItem('invoice-print-data', JSON.stringify(data));
+      // 3. Neues Fenster mit der HTML-Vorlage öffnen
+      window.open('/rechnung-vorlage.html?print=1', '_blank');
+    } catch (e: any) {
+      this.error = e.message || 'Fehler beim Drucken';
+    }
+  }
+
+  generateInvoicePdf(data: any) {
+    const { companyInfo, customer, invoice, items } = data;
+    // Summen aus Bruttobeträgen berechnen
+    const totalGross = items.reduce((sum: number, item: any) => sum + (typeof item.amount === 'number' ? item.amount : parseFloat(item.amount)), 0);
+    // Netto = Brutto / (1 + MwSt/100) je Position
+    const totalNet = items.reduce((sum: number, item: any) => {
+      const gross = typeof item.amount === 'number' ? item.amount : parseFloat(item.amount);
+      const vat = typeof item.tax_rate === 'number' ? item.tax_rate : parseFloat(item.tax_rate);
+      return sum + (gross / (1 + vat / 100));
+    }, 0);
+    // MwSt = Brutto - Netto
+    const totalVat = totalGross - totalNet;
+    const faelligBis = invoice.due_date ? (invoice.due_date.substring(0, 10)) : '';
+    const status = (invoice.status || '').toUpperCase();
+    let statusColor = '#0d6efd';
+    if (status === 'PAID') statusColor = '#198754';
+    if (status === 'OVERDUE') statusColor = '#dc3545';
+    if (status === 'DRAFT') statusColor = '#6c757d';
+    const accentColor = '#0d6efd';
+    const paymentDays = invoice.due_date && invoice.issued_date ? Math.round((new Date(invoice.due_date).getTime() - new Date(invoice.issued_date).getTime()) / (1000*60*60*24)) : null;
+    const docDefinition: any = {
+      content: [
+        // Kopfbereich mit Logo und Firmeninfos
+        {
+          columns: [
+            [
+              companyInfo.logoUrl ? { image: companyInfo.logoUrl, width: 90, margin: [0, 0, 0, 8] } : {},
+              { text: companyInfo.name, bold: true, fontSize: 18, color: accentColor, margin: [0, 0, 0, 2] },
+              { text: companyInfo.street, color: '#495057', fontSize: 11 },
+              { text: `${companyInfo.postalCode} ${companyInfo.city}`, color: '#495057', fontSize: 11 },
+              { text: `UID: ${companyInfo.vatId}`, color: '#495057', fontSize: 11 }
+            ],
+            [
+              { text: 'RECHNUNG', alignment: 'right', bold: true, fontSize: 28, color: accentColor, margin: [0, 0, 0, 10], letterSpacing: 2 },
+              { text: `Status: ${status}`, alignment: 'right', color: statusColor, bold: true, fontSize: 14, margin: [0, 0, 0, 5] },
+              { canvas: [ { type: 'rect', x: 0, y: 0, w: 180, h: 3, color: accentColor } ], margin: [0, 0, 0, 10], alignment: 'right' },
+              { text: `Rechnungsnummer: ${invoice.renr}`, alignment: 'right', color: '#495057', fontSize: 11 },
+              { text: `Rechnungsdatum: ${invoice.issued_date?.substring(0, 10) || ''}`, alignment: 'right', color: '#495057', fontSize: 11 },
+              { text: `Fällig am: ${faelligBis}`, alignment: 'right', color: '#495057', fontSize: 11 },
+              { text: `Kundennummer: ${invoice.cust}`, alignment: 'right', color: '#495057', fontSize: 11 }
+            ]
+          ],
+          columnGap: 30
+        },
+        { text: ' ', margin: [0, 16] },
+        // Empfänger
+        {
+          columns: [
+            [
+              { text: 'Rechnungsempfänger', bold: true, color: accentColor, fontSize: 12, margin: [0, 0, 0, 2] },
+              { text: customer.betr || `${customer.vname} ${customer.nname}`, color: '#212529', fontSize: 11 },
+              { text: customer.str, color: '#212529', fontSize: 11 },
+              { text: `${customer.postc} ${customer.town}`, color: '#212529', fontSize: 11 }
+            ]
+          ]
+        },
+        { text: ' ', margin: [0, 10] },
+        // Einleitung
+        { text: 'Sehr geehrte Damen und Herren,', margin: [0, 0, 0, 4], color: '#212529', fontSize: 11 },
+        { text: 'wir erlauben uns, Ihnen folgende Rechnung zu legen:', margin: [0, 0, 0, 14], color: '#212529', fontSize: 11 },
+        // Positionstabelle
+        {
+          table: {
+            headerRows: 1,
+            widths: ['*', 'auto', 'auto', 'auto', 'auto'],
+            body: [
+              [
+                { text: 'Bezeichnung', bold: true, fillColor: accentColor, color: 'white', fontSize: 11 },
+                { text: 'Menge', bold: true, fillColor: accentColor, color: 'white', fontSize: 11 },
+                { text: 'Einzelpreis (Netto)', bold: true, fillColor: accentColor, color: 'white', fontSize: 11 },
+                { text: 'MwSt (%)', bold: true, fillColor: accentColor, color: 'white', fontSize: 11 },
+                { text: 'Betrag (Brutto)', bold: true, fillColor: accentColor, color: 'white', fontSize: 11 }
+              ],
+              ...items.map((item: any, idx: number) => {
+                const gross = typeof item.amount === 'number' ? item.amount : parseFloat(item.amount);
+                const vat = typeof item.tax_rate === 'number' ? item.tax_rate : parseFloat(item.tax_rate);
+                const net = gross / (1 + vat / 100);
+                return [
+                  { text: item.description, fillColor: idx % 2 === 0 ? '#f8fafd' : null, color: '#212529', fontSize: 11 },
+                  { text: item.quantity, fillColor: idx % 2 === 0 ? '#f8fafd' : null, color: '#212529', fontSize: 11 },
+                  { text: this.formatCurrency(net), fillColor: idx % 2 === 0 ? '#f8fafd' : null, color: '#212529', fontSize: 11 },
+                  { text: item.tax_rate, fillColor: idx % 2 === 0 ? '#f8fafd' : null, color: '#212529', fontSize: 11 },
+                  { text: this.formatCurrency(gross), fillColor: idx % 2 === 0 ? '#f8fafd' : null, color: '#212529', fontSize: 11 }
+                ];
+              })
+            ]
+          },
+          layout: {
+            fillColor: (rowIndex: number) => rowIndex === 0 ? accentColor : null,
+            hLineColor: () => accentColor,
+            vLineColor: () => accentColor
+          },
+          margin: [0, 0, 0, 10]
+        },
+        // Summenbereich modern, inspiriert vom Beispiel
+        {
+          margin: [0, 20, 0, 0],
+          table: {
+            widths: ['*', 'auto'],
+            body: [
+              [
+                { text: 'Zwischensumme (Netto)', alignment: 'right', border: [false, true, false, false], margin: [0, 6, 0, 6], bold: true, fontSize: 12 },
+                { text: this.formatCurrency(totalNet), alignment: 'right', border: [false, true, false, false], margin: [0, 6, 0, 6], fontSize: 12 }
+              ],
+              [
+                { text: `MwSt (${items[0]?.tax_rate || ''}%)`, alignment: 'right', border: [false, false, false, false], margin: [0, 6, 0, 6], fontSize: 12 },
+                { text: this.formatCurrency(totalVat), alignment: 'right', border: [false, false, false, false], margin: [0, 6, 0, 6], fontSize: 12 }
+              ],
+              [
+                { text: 'Gesamtbetrag (Brutto)', alignment: 'right', border: [false, true, false, false], margin: [0, 10, 0, 6], bold: true, fontSize: 14 },
+                { text: this.formatCurrency(totalGross), alignment: 'right', border: [false, true, false, false], margin: [0, 10, 0, 6], bold: true, fontSize: 14 }
+              ]
+            ]
+          },
+          layout: {
+            hLineWidth: (i: number, node: any) => (i === 0 || i === node.table.body.length) ? 1.5 : 0.5,
+            vLineWidth: () => 0,
+            hLineColor: (i: number, node: any) => (i === 0 || i === node.table.body.length) ? accentColor : '#dee2e6',
+            paddingLeft: () => 0,
+            paddingRight: () => 0,
+            paddingTop: () => 2,
+            paddingBottom: () => 2
+          }
+        },
+        // Zahlungsinformation
+        { text: 'Zahlungsinformation', style: 'sectionHeader', color: accentColor, margin: [0, 14, 0, 2] },
+        { text: paymentDays ? `Zahlbar innerhalb von ${paymentDays} Tagen bis zum ${faelligBis}.` : `Zahlbar bis zum ${faelligBis}.`, margin: [0, 0, 0, 2], color: '#212529', fontSize: 11 },
+        {
+          table: {
+            widths: ['auto', '*'],
+            body: [
+              [ { text: 'Bank:', bold: true, color: accentColor, fontSize: 11 }, companyInfo.bankName || '-' ],
+              [ { text: 'IBAN:', bold: true, color: accentColor, fontSize: 11 }, companyInfo.iban || '-' ],
+              [ { text: 'BIC:', bold: true, color: accentColor, fontSize: 11 }, companyInfo.bic || '-' ],
+              [ { text: 'Verwendungszweck:', bold: true, color: accentColor, fontSize: 11 }, invoice.renr ]
+            ]
+          },
+          layout: 'noBorders',
+          margin: [0, 0, 0, 10]
+        },
+        // Notizen
+        invoice.notes ? { text: invoice.notes, italics: true, fontSize: 10, margin: [0, 0, 0, 10], color: '#495057' } : {},
+      ],
+      styles: {
+        sectionHeader: { fontSize: 14, bold: true, decoration: 'underline', margin: [0, 0, 0, 4] }
+      },
+      defaultStyle: { fontSize: 10, color: '#212529' },
+      pageMargins: [40, 60, 40, 60],
+      footer: function(currentPage: number, pageCount: number) {
+        return {
+          columns: [
+            [
+              { text: companyInfo.name, bold: true, color: accentColor, fontSize: 10 },
+              { text: companyInfo.street, color: '#495057', fontSize: 9 },
+              { text: `${companyInfo.postalCode} ${companyInfo.city}`, color: '#495057', fontSize: 9 }
+            ],
+            [
+              { text: `UID: ${companyInfo.vatId}`, color: '#495057', fontSize: 9 },
+              { text: `Tel: ${companyInfo.phone}`, color: '#495057', fontSize: 9 },
+              { text: `E-Mail: ${companyInfo.email}`, color: '#495057', fontSize: 9 }
+            ],
+            {
+              alignment: 'right',
+              text: `Seite ${currentPage} / ${pageCount}`,
+              margin: [0, 10, 0, 0],
+              color: accentColor,
+              fontSize: 10
+            }
+          ],
+          margin: [40, 0, 40, 0],
+          fontSize: 8
+        };
+      }
+    };
+    pdfMake.createPdf(docDefinition).open();
+  }
+
+  formatCurrency(val: number) {
+    const num = typeof val === 'number' ? val : parseFloat(val);
+    if (isNaN(num)) return '-';
+    return `${num.toFixed(2)} €`;
+  }
+
   getCustomerName(custId: number): string {
     const c = this.customers.find(c => c.cust === custId);
     return c ? c.betr : '-';
@@ -341,5 +545,9 @@ export class RechnungenComponent implements OnInit {
 
   getCustomerById(id: any) {
     return this.customers.find(c => c.cust === id) || null;
+  }
+
+  openInvoiceTemplate() {
+    window.open('/assets/rechnung-vorlage.html', '_blank');
   }
 }

@@ -88,8 +88,8 @@ export class AngeboteComponent implements OnInit {
         let totalGross = q.totalGross || q.total_gross;
         // Fallback: Wenn Positionen vorhanden, summiere sie
         if ((!totalGross || !totalNet) && q.items && Array.isArray(q.items) && q.items.length > 0) {
-          totalNet = q.items.reduce((sum: number, p: any) => sum + (+p.net || +p.unit_price || 0), 0);
-          totalGross = q.items.reduce((sum: number, p: any) => sum + (+p.gross || +p.amount || 0), 0);
+          totalNet = q.items.reduce((sum: number, p: any) => sum + ((+p.net || +p.unit_price || 0) * (+p.quantity || 1)), 0);
+          totalGross = q.items.reduce((sum: number, p: any) => sum + ((+p.gross || +p.amount || 0) * (+p.quantity || 1)), 0);
         }
         // Wenn nur total_amount (Backend: Brutto) und mwstprz vorhanden, rechne korrekt um
         if (!totalNet && q.total_amount && q.mwstprz !== undefined && q.mwstprz !== null) {
@@ -132,7 +132,7 @@ export class AngeboteComponent implements OnInit {
         cust: this.newQuote.customer,
         title: this.newQuote.title || '',
         issued_date: this.newQuote.date,
-        total_amount: this.newQuote.totalNet,
+        total_amount: this.newQuote.totalGross, // Brutto als total_amount!
         mwstprz: vat,
         mwst: +(this.newQuote.totalGross - this.newQuote.totalNet).toFixed(2),
         items
@@ -155,9 +155,9 @@ export class AngeboteComponent implements OnInit {
       });
       if (!res.ok) throw new Error('Fehler beim Erstellen des Angebots');
       this.success = 'Angebot erfolgreich erstellt!';
+      // this.editQuote = null; // NICHT nötig beim Anlegen
       this.newQuote = { items: [] };
       this.loadQuotes();
-      // Modal schließen und Backdrop entfernen (wie bei Rechnungen)
       setTimeout(() => {
         const modal = document.getElementById('newQuoteModal');
         if (modal && (window as any).bootstrap) {
@@ -167,6 +167,7 @@ export class AngeboteComponent implements OnInit {
         document.body.classList.remove('modal-open');
         const backdrops = document.querySelectorAll('.modal-backdrop');
         backdrops.forEach(b => b.parentNode?.removeChild(b));
+        // KEIN Zugriff auf this.editQuote beim Anlegen!
       }, 300);
     } catch (e: any) {
       this.error = e.message || 'Fehler beim Erstellen des Angebots';
@@ -312,7 +313,7 @@ export class AngeboteComponent implements OnInit {
         cust: this.editQuote.customer,
         issued_date: this.editQuote.date,
         status: this.editQuote.status,
-        total_amount: this.editQuote.totalNet,
+        total_amount: this.editQuote.totalGross, // Brutto als total_amount!
         mwstprz: vat,
         mwst: +(this.editQuote.totalGross - this.editQuote.totalNet).toFixed(2)
       };
@@ -366,7 +367,7 @@ export class AngeboteComponent implements OnInit {
         }
       }
       this.success = 'Angebot erfolgreich aktualisiert!';
-      this.editQuote = null;
+      // this.editQuote = null; // <-- Entferne oder verschiebe diese Zeile!
       this.loadQuotes();
       setTimeout(() => {
         const modal = document.getElementById('editQuoteModal');
@@ -377,6 +378,8 @@ export class AngeboteComponent implements OnInit {
         document.body.classList.remove('modal-open');
         const backdrops = document.querySelectorAll('.modal-backdrop');
         backdrops.forEach(b => b.parentNode?.removeChild(b));
+        // editQuote erst nach dem Schließen des Modals auf null setzen
+        this.editQuote = null;
       }, 300);
     } catch (e: any) {
       this.error = e.message || 'Fehler beim Speichern des Angebots';
@@ -396,6 +399,22 @@ export class AngeboteComponent implements OnInit {
       this.loadQuotes();
     } catch (e: any) {
       this.error = e.message || 'Fehler beim Löschen des Angebots';
+    }
+  }
+
+  async printOfferPdf(quote: any) {
+    try {
+      const token = localStorage.getItem('token');
+      // Hole Angebotsdaten per API (analog zu Rechnungen)
+      const res = await fetch(`/api/quotes/${quote.qid || quote.id}/pdf-data`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Fehler beim Laden der Angebotsdaten');
+      const data = await res.json();
+      localStorage.setItem('offer-print-data', JSON.stringify(data));
+      window.open('/angebot-vorlage.html?print=1', '_blank');
+    } catch (e: any) {
+      this.error = e.message || 'Fehler beim Drucken';
     }
   }
 }
